@@ -1,20 +1,26 @@
+// backend/routes/imageProxy.js
 import express from "express";
 import axios from "axios";
 
 const router = express.Router();
 
-router.get("/image/:id", async (req, res) => {
-  const { id } = req.params;
+// Serve Google Drive image by ID
+router.get("/:id", async (req, res) => {
+  const fileId = req.params.id;
+  const driveUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+
   try {
-    const response = await axios.get(
-      `https://drive.google.com/uc?export=view&id=${id}`,
-      { responseType: "arraybuffer" }
-    );
-    res.set("Content-Type", response.headers["content-type"]);
+    const response = await axios.get(driveUrl, {
+      responseType: "arraybuffer",
+    });
+
+    const contentType =
+      response.headers["content-type"] || "image/jpeg";
+    res.setHeader("Content-Type", contentType);
     res.send(response.data);
-  } catch (err) {
-    console.error("Drive proxy error:", err.message);
-    res.status(500).send("Failed to fetch image");
+  } catch (error) {
+    console.error("❌ Error fetching image:", error.message);
+    res.status(404).send("Image not found");
   }
 });
 

@@ -1,22 +1,24 @@
+// src/components/Navbar.tsx
 import React from "react";
+import { Link } from "react-router-dom";
 
-interface NavbarProps {
-  onUploadClick: () => void;
-}
-
-const Navbar: React.FC<NavbarProps> = ({ onUploadClick }) => {
+const Navbar: React.FC<{ onOpenUpload?: () => void }> = ({ onOpenUpload }) => {
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-gray-950/70 backdrop-blur-lg border-b border-cyan-400/20">
-      <div className="container mx-auto flex justify-between items-center px-6 py-4">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-pink-500 bg-clip-text text-transparent">
-          Aegonish Blog
-        </h1>
-        <button
-          onClick={onUploadClick}
-          className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-fuchsia-500 text-white font-semibold rounded-lg shadow-lg hover:opacity-90 transition-all"
-        >
-          + Upload
-        </button>
+    <nav className="w-full bg-[#04121a] border-b border-cyan-900 py-4 px-6 fixed top-0 z-30">
+      <div className="container mx-auto flex items-center justify-between">
+        <div className="text-xl font-bold text-cyan-300">ÆGONISH</div>
+
+        <div className="flex gap-4 items-center">
+          <Link to="/" className="text-cyan-200">
+            Home
+          </Link>
+          <button
+            onClick={() => onOpenUpload && onOpenUpload()}
+            className="px-3 py-1 rounded bg-gradient-to-br from-orange-400 to-pink-500 text-white shadow"
+          >
+            Upload
+          </button>
+        </div>
       </div>
     </nav>
   );

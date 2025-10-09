@@ -1,54 +1,63 @@
+// src/pages/EditPost.tsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import api from "../utils/api";
 
 const EditPost: React.FC = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const nav = useNavigate();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchPost = async () => {
-      const res = await axios.get(`http://localhost:4000/api/posts/${id}`);
-      setTitle(res.data.title);
-      setContent(res.data.content);
-    };
-    fetchPost();
+    if (!id) return;
+    api.get(`/api/posts/${id}`).then((r) => {
+      const data = r.data;
+      setTitle(data.title ?? "");
+      setContent(data.content ?? "");
+    }).catch((e) => {
+      console.error("Fetch post:", e);
+    });
   }, [id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await axios.put(`http://localhost:4000/api/posts/${id}`, { title, content });
-    navigate("/");
+    if (!id) return;
+    setLoading(true);
+    try {
+      await api.put(`/api/posts/${id}`, { title, content });
+      nav("/");
+    } catch (err) {
+      console.error("Edit failed:", err);
+      alert("Edit failed. See console.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-gray-900 p-8 rounded-2xl shadow-lg border border-cyan-500/20">
-      <h2 className="text-2xl font-bold mb-6 text-cyan-400">Edit Post</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="container mx-auto px-6 py-8">
+      <h2 className="text-2xl text-cyan-200 mb-4">Edit Post</h2>
+      <form onSubmit={submit} className="max-w-2xl">
         <input
-          type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 focus:border-cyan-500 outline-none"
-          placeholder="Title"
+          className="w-full mb-3 p-2 bg-[#04121a] border border-cyan-800 rounded text-white"
           required
         />
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 focus:border-cyan-500 outline-none"
-          rows={6}
-          placeholder="Content"
-          required
+          rows={8}
+          className="w-full mb-3 p-2 bg-[#04121a] border border-cyan-800 rounded text-white"
         />
-        <button
-          type="submit"
-          className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 rounded-lg transition"
-        >
-          Save Changes
-        </button>
+        <div className="flex gap-3">
+          <button className="px-4 py-2 rounded bg-gray-700 text-white">Cancel</button>
+          <button type="submit" disabled={loading} className="px-4 py-2 rounded bg-cyan-600 text-white">
+            {loading ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
       </form>
     </div>
   );

@@ -3,6 +3,10 @@ import type { PostType } from "./types.ts";
 
 const API_URL = "http://localhost:4000";
 
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE || "http://localhost:4000";
+
+export default axios;
+
 export const fetchPosts = () => axios.get<PostType[]>(`${API_URL}/posts`);
 export const fetchPost = (id: string) => axios.get<PostType>(`${API_URL}/posts/${id}`);
 export const createPost = (data: Omit<PostType, "_id" | "createdAt">) => axios.post(`${API_URL}/posts`, data);

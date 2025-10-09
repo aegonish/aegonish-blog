@@ -1,19 +1,16 @@
-import React, { useState } from "react";
+import React from "react";
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import PostPage from "./pages/PostPage";
 import EditPost from "./pages/EditPost";
-import UploadModal from "./components/UploadModal";
 
 const App: React.FC = () => {
-  const [showUpload, setShowUpload] = useState(false);
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-800 text-white">
-      <Navbar onUploadClick={() => setShowUpload(true)} />
-      <main className="container mx-auto px-6 py-10">
+    <div className="min-h-screen flex flex-col bg-[#071226] text-white">
+      <Navbar />
+      <main className="flex-grow container mx-auto px-6 py-8">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/post/:id" element={<PostPage />} />
@@ -21,7 +18,6 @@ const App: React.FC = () => {
         </Routes>
       </main>
       <Footer />
-      {showUpload && <UploadModal onClose={() => setShowUpload(false)} />}
     </div>
   );
 };
