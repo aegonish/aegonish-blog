@@ -1,102 +1,137 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
-interface Props {
-  isEdit?: boolean;
-}
-
-const UploadPost: React.FC<Props> = ({ isEdit = false }) => {
-  const { id } = useParams();
+const UploadPost: React.FC = () => {
+  const { id } = useParams(); // id present when editing (route /edit/:id)
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [changeImage, setChangeImage] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (isEdit && id) {
+    if (id) {
       axios
         .get(`http://localhost:4000/api/posts/${id}`)
         .then((res) => {
-          const post = res.data;
-          setTitle(post.title);
-          setContent(post.content);
+          setTitle(res.data.title ?? "");
+          setContent(res.data.content ?? "");
+          setChangeImage(false); // by default don't change image
         })
-        .catch((err) => console.error("Error fetching post:", err));
+        .catch((err) => {
+          console.error("Failed to load post for edit:", err);
+          alert("Failed to load post.");
+        });
     }
-  }, [isEdit, id]);
+  }, [id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("content", content);
-    if (file) formData.append("file", file);
+    setLoading(true);
 
     try {
-      if (isEdit && id) {
-        await axios.put(`http://localhost:4000/api/posts/${id}`, {
-          title,
-          content,
-        });
-        alert("Post updated successfully!");
-      } else {
-        await axios.post("http://localhost:4000/api/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        alert("Post uploaded successfully!");
+      if (id) {
+        // EDIT mode
+        if (changeImage && file) {
+          // multipart with file
+          const fd = new FormData();
+          fd.append("file", file);
+          fd.append("title", title);
+          fd.append("content", content);
+          await axios.put(`http://localhost:4000/api/posts/${id}`, fd, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+        } else {
+          // no file: send JSON update
+          await axios.put(`http://localhost:4000/api/posts/${id}`, {
+            title,
+            content,
+          });
+        }
+
+        // ensure homepage shows updated content
+        window.location.href = "/";
+        return;
       }
-      navigate("/");
+
+      // CREATE mode
+      const form = new FormData();
+      if (file) form.append("file", file);
+      form.append("title", title);
+      form.append("content", content);
+
+      await axios.post("http://localhost:4000/api/upload", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      window.location.href = "/";
     } catch (err) {
-      console.error("Error submitting post:", err);
-      alert("Error submitting post");
+      console.error("Upload/Edit failed:", err);
+      alert("Operation failed. Check console.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center py-12 px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-gray-900/70 backdrop-blur-xl border border-cyan-500/20 rounded-2xl shadow-lg p-8 w-full max-w-lg text-white"
-      >
-        <h1 className="text-3xl font-bold mb-6 text-cyan-400">
-          {isEdit ? "Edit Post" : "Upload New Post"}
-        </h1>
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="card-glass w-full max-w-lg p-6 rounded-2xl">
+        <h2 className="text-2xl font-bold mb-4 text-cyan-300">
+          {id ? "Edit Post" : "Upload New Post"}
+        </h2>
 
-        <input
-          type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full mb-4 p-3 rounded-lg bg-gray-800 border border-cyan-500/30 text-white"
-          required
-        />
-
-        <textarea
-          placeholder="Content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={5}
-          className="w-full mb-4 p-3 rounded-lg bg-gray-800 border border-cyan-500/30 text-white"
-          required
-        />
-
-        {!isEdit && (
+        <form onSubmit={submit} className="flex flex-col gap-4">
           <input
-            type="file"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="w-full mb-6 text-gray-300"
+            type="text"
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             required
+            className="p-3 rounded-md bg-gray-800 border border-gray-700 text-white"
           />
-        )}
+          <textarea
+            placeholder="Content"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows={5}
+            required
+            className="p-3 rounded-md bg-gray-800 border border-gray-700 text-white"
+          />
 
-        <button
-          type="submit"
-          className="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-lg font-semibold transition"
-        >
-          {isEdit ? "Save Changes" : "Upload Post"}
-        </button>
-      </form>
+          {id ? (
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={changeImage}
+                  onChange={() => setChangeImage((v) => !v)}
+                />
+                <span className="text-sm text-gray-300">Change image?</span>
+              </label>
+            </div>
+          ) : null}
+
+          {(!id || changeImage) && (
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="text-gray-300"
+              {...(!id ? { required: true } : {})}
+            />
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-2 py-3 bg-cyan-600 hover:bg-cyan-500 rounded-md text-white font-semibold"
+          >
+            {loading ? "Saving..." : id ? "Save Changes" : "Upload Post"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

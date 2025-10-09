@@ -21,12 +21,19 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+
+
+h1, h2, h3 {
+  letter-spacing: 0.5px;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: radial-gradient(circle at top left, #0a0f1e, #04060a 80%);
 }
 
 a {
@@ -104,3 +111,14 @@ button:focus-visible {
   }
 }
 
+
+
+.neon-text {
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.18), 0 0 22px rgba(128, 0, 255, 0.08);
+}
+
+.card-glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.04);
+  backdrop-filter: blur(10px);
+}
