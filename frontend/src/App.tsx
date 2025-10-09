@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import PostPage from "./pages/PostPage";
 import UploadPost from "./pages/UploadPost";
+import EditPost from "./pages/EditPost";
 
 const App: React.FC = () => {
   return (
@@ -15,6 +16,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Home />} />
           <Route path="/post/:id" element={<PostPage />} />
           <Route path="/upload" element={<UploadPost />} />
+          <Route path="/edit/:id" element={<EditPost/>} />
         </Routes>
       </main>
       <Footer />
