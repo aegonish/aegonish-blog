@@ -1,10 +1,7 @@
 // E:\aegonish-blog\backend\routes\upload.js
-
 import dotenv from "dotenv";
 dotenv.config({ path: "./.env", override: true });
 
-
-// E:\aegonish-blog\backend\routes\upload.js
 import express from "express";
 import multer from "multer";
 import fs from "fs";
@@ -12,44 +9,56 @@ import { google } from "googleapis";
 import Post from "../models/Post.js";
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" });
 
-// --- Load Google credentials ---
-const {
-  GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET,
-  GOOGLE_REDIRECT_URI,
-  GOOGLE_REFRESH_TOKEN,
-  GOOGLE_DRIVE_FOLDER_ID,
-} = process.env;
+// ✅ Allow up to 200MB uploads (suitable for short videos)
+const upload = multer({
+  dest: "uploads/",
+  limits: { fileSize: 200 * 1024 * 1024 },
+});
 
-// --- Initialize OAuth2 client ---
-const oauth2Client = new google.auth.OAuth2(
-  GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET,
-  GOOGLE_REDIRECT_URI
-);
+// ✅ Wrap Drive client creation in a function so env vars load correctly
+function createDriveClient() {
+  const {
+    GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+    GOOGLE_REDIRECT_URI,
+    GOOGLE_REFRESH_TOKEN,
+    GOOGLE_DRIVE_FOLDER_ID,
+  } = process.env;
 
-oauth2Client.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+  const oauth2Client = new google.auth.OAuth2(
+    GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET,
+    GOOGLE_REDIRECT_URI
+  );
+  oauth2Client.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
 
-const drive = google.drive({ version: "v3", auth: oauth2Client });
+  const drive = google.drive({ version: "v3", auth: oauth2Client });
+  return { drive, folderId: GOOGLE_DRIVE_FOLDER_ID };
+}
 
 router.post("/", upload.single("file"), async (req, res) => {
   try {
     if (!req.file)
       return res.status(400).json({ message: "No file uploaded" });
 
-    console.log("📤 Uploading file:", req.file.originalname);
+    const { drive, folderId } = createDriveClient();
+    const filePath = req.file.path;
+    const mimeType = req.file.mimetype;
+    const isVideo = mimeType.startsWith("video/");
+    const mediaType = isVideo ? "video" : "image";
 
-    // --- Upload to specific Drive folder ---
+    console.log(`📤 Uploading ${mediaType}: ${req.file.originalname}`);
+
+    // --- Upload to Google Drive ---
     const fileMetadata = {
       name: req.file.originalname,
-      parents: [GOOGLE_DRIVE_FOLDER_ID],
+      parents: [folderId],
     };
 
     const media = {
-      mimeType: req.file.mimetype,
-      body: fs.createReadStream(req.file.path),
+      mimeType,
+      body: fs.createReadStream(filePath),
     };
 
     const { data } = await drive.files.create({
@@ -58,29 +67,40 @@ router.post("/", upload.single("file"), async (req, res) => {
       fields: "id",
     });
 
-    console.log("✅ File uploaded to Drive:", data.id);
+    console.log("✅ Uploaded to Drive:", data.id);
 
-    // --- Try making it public ---
+    // --- Make file public ---
     try {
       await drive.permissions.create({
         fileId: data.id,
         requestBody: { role: "reader", type: "anyone" },
       });
-      console.log("🌍 File permissions updated to public.");
+      console.log("🌍 Public permissions set");
     } catch (permErr) {
-      console.error("⚠️ Permission update failed:", permErr.message);
+      console.error("⚠️ Permission error:", permErr.message);
     }
 
-    // --- Use the proper 'export=view' public URL ---
-    const imageUrl = `https://drive.google.com/uc?export=view&id=${data.id}`;
+    // --- Generate proper public URL ---
+    const fileUrl = `https://drive.google.com/uc?export=view&id=${data.id}`;
 
-    await fs.promises.unlink(req.file.path);
+    await fs.promises.unlink(filePath);
 
-    const { title = "Untitled Post", content = "No description." } = req.body;
-    const post = new Post({ title, content, imageUrl });
+    // --- Save post in DB ---
+    const { title = "Untitled", content = "" } = req.body;
+    const post = new Post({
+      title,
+      content,
+      imageUrl: fileUrl,
+      mediaType,
+      originalName: req.file.originalname,
+      size: req.file.size,
+    });
     await post.save();
 
-    res.status(201).json({ message: "File uploaded and post created", post });
+    res.status(201).json({
+      message: "File uploaded and post created",
+      post,
+    });
   } catch (err) {
     console.error("❌ Upload failed:", err);
     res.status(500).json({ message: "Upload failed", error: err.message });

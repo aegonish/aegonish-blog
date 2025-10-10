@@ -13,14 +13,15 @@ export interface Post {
 const resolveMediaUrl = (url?: string) => {
   if (!url) return "/placeholder.png";
   try {
+    const base = window.location.origin; // dynamic for localhost or Cloudflare
     if (url.includes("drive.google.com")) {
       const idMatch = url.match(/id=([a-zA-Z0-9_-]+)/);
-      if (idMatch?.[1]) return `http://localhost:4000/image/${idMatch[1]}`;
+      if (idMatch?.[1]) return `${base}/image/${idMatch[1]}`;
       const dMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-      if (dMatch?.[1]) return `http://localhost:4000/image/${dMatch[1]}`;
+      if (dMatch?.[1]) return `${base}/image/${dMatch[1]}`;
     }
     if (url.startsWith("http")) return url;
-    return `http://localhost:4000/image/${url}`;
+    return `${base}/image/${url}`;
   } catch {
     return "/placeholder.png";
   }

@@ -1,16 +1,9 @@
 // src/pages/Home.tsx
 import React, { useEffect, useState } from "react";
 import api from "../utils/api";
-
 import PostCard from "../components/PostCard";
-
 import UploadModal from "../components/UploadModal";
 import type { Post } from "../components/PostCard";
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-// @ts-ignore: used indirectly by fetchPosts
-const [posts, setPosts] = useState<Post[]>([]);
-
 
 const Home: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -21,7 +14,6 @@ const Home: React.FC = () => {
     setLoading(true);
     try {
       const res = await api.get("/api/posts");
-      // ensure array
       setPosts(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error fetching posts:", err);
@@ -73,7 +65,7 @@ const Home: React.FC = () => {
       <UploadModal
         open={showUpload}
         onClose={() => setShowUpload(false)}
-        onUploaded={() => fetchPosts()}
+        onUploaded={fetchPosts}
         initial={null}
       />
     </div>
