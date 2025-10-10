@@ -5,7 +5,7 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Import your route modules
+// Import route modules
 import uploadRoutes from "./routes/upload.js";
 import postRoutes from "./routes/posts.js";
 import imageProxyRoutes from "./routes/imageProxy.js";
@@ -29,18 +29,25 @@ const distPath = path.join(__dirname, "../aegonish-frontend/dist");
 app.use(express.static(distPath));
 console.log(`🚀 Serving static from: ${distPath}`);
 
-
-// ✅ Express 5-safe catch-all route (React Router support)
+// ✅ React Router fallback
 app.get(/.*/, (req, res) => {
   res.sendFile(path.resolve(distPath, "index.html"));
 });
 
-
-// ✅ MongoDB + Server startup
+// ✅ MongoDB connection
 const PORT = process.env.PORT || 4000;
 
+// 💡 Force correct Mongo hostname for Docker
+// Inside docker-compose, the "mongo" service name resolves automatically
+const MONGO_URI =
+  process.env.DOCKER_ENV === "true"
+    ? "mongodb://mongo:27017/aegonish_blog"
+    : process.env.MONGO_URI || "mongodb://127.0.0.1:27017/aegonish_blog";
+
+console.log("📦 Using Mongo URI:", MONGO_URI);
+
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(MONGO_URI)
   .then(() => {
     console.log("✅ MongoDB Connected");
     app.listen(PORT, () => {
