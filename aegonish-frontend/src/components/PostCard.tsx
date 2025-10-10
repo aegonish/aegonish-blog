@@ -10,18 +10,26 @@ export interface Post {
   createdAt?: string;
 }
 
+/** ✅ Smart resolver:
+ * - On localhost → use Express proxy (/image/:id)
+ * - On Cloudflare/public → use Google Drive direct link
+ */
 const resolveMediaUrl = (url?: string) => {
   if (!url) return "/placeholder.png";
+
   try {
-    const base = window.location.origin; // dynamic for localhost or Cloudflare
     if (url.includes("drive.google.com")) {
-      const idMatch = url.match(/id=([a-zA-Z0-9_-]+)/);
-      if (idMatch?.[1]) return `${base}/image/${idMatch[1]}`;
-      const dMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-      if (dMatch?.[1]) return `${base}/image/${dMatch[1]}`;
+      const idMatch =
+        url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (idMatch?.[1]) {
+        // Always proxy through backend, even on Cloudflare
+        return `${window.location.origin}/image/${idMatch[1]}`;
+      }
     }
+
+    // fallback for relative or normal URLs
     if (url.startsWith("http")) return url;
-    return `${base}/image/${url}`;
+    return `${window.location.origin}/image/${url}`;
   } catch {
     return "/placeholder.png";
   }

@@ -4,23 +4,32 @@ import axios from "axios";
 
 const router = express.Router();
 
-// Serve Google Drive image by ID
+// ✅ Handle Google Drive image or video streaming
 router.get("/:id", async (req, res) => {
-  const fileId = req.params.id;
-  const driveUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+  const { id } = req.params;
+  if (!id) return res.status(400).send("Missing file ID");
+
+  // Always use direct-download URL (export=download)
+  const driveUrl = `https://drive.google.com/uc?export=download&id=${id}`;
 
   try {
     const response = await axios.get(driveUrl, {
-      responseType: "arraybuffer",
+      responseType: "stream",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      },
     });
 
-    const contentType =
-      response.headers["content-type"] || "image/jpeg";
+    const contentType = response.headers["content-type"] || "application/octet-stream";
     res.setHeader("Content-Type", contentType);
-    res.send(response.data);
-  } catch (error) {
-    console.error("❌ Error fetching image:", error.message);
-    res.status(404).send("Image not found");
+
+    response.data.pipe(res);
+  } catch (err) {
+    console.error("❌ Proxy error for file ID:", id, "-", err.message);
+
+    // Fallback: send placeholder
+    res.redirect("https://via.placeholder.com/800x600?text=Image+Unavailable");
   }
 });
 
