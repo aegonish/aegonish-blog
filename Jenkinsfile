@@ -1,41 +1,44 @@
+@Library('jenkins-shared-libs@main') _
+
 pipeline {
-    agent any
+    agent { label 'local-agent' }
 
     environment {
-        // Docker image names
-        FRONTEND_IMAGE = "anishkapuskar/aegonish-frontend"
-        BACKEND_IMAGE  = "anishkapuskar/aegonish-backend"
-
-        // Docker Hub credentials ID from Jenkins
-        DOCKERHUB_CREDENTIALS = 'dockerhub-creds'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')   // Jenkins credential ID for Docker Hub
+        BACKEND_IMAGE = "aegonish-backend"
+        FRONTEND_IMAGE = "aegonish-frontend"
+        DOCKERHUB_USER = "your_dockerhub_username"
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                echo 'Cloning repository...'
-                checkout scm
+                echo "Cloning repository..."
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/anish-kapuskar/aegonish-blog.git',
+                        credentialsId: 'github-pat'
+                    ]]
+                ])
             }
         }
 
         stage('Build Backend Image') {
             steps {
-                script {
-                    echo 'Building backend Docker image...'
-                    dir('backend') {
-                        sh 'docker build -t ${BACKEND_IMAGE}:latest -f Dockerfile ..'
-                    }
+                echo "Building backend Docker image..."
+                dir('backend') {
+                    bat "docker build -t %BACKEND_IMAGE% ."
                 }
             }
         }
 
         stage('Build Frontend Image') {
             steps {
-                script {
-                    echo 'Building frontend Docker image...'
-                    dir('frontend') {
-                        sh 'docker build -t ${FRONTEND_IMAGE}:latest -f Dockerfile ..'
-                    }
+                echo "Building frontend Docker image..."
+                dir('frontend') {
+                    bat "docker build -t %FRONTEND_IMAGE% ."
                 }
             }
         }
@@ -43,31 +46,28 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: "${DOCKERHUB_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh """
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                            docker push ${BACKEND_IMAGE}:latest
-                            docker push ${FRONTEND_IMAGE}:latest
-                        """
-                    }
+                    echo "Pushing Docker images to Docker Hub..."
+                    bat "docker login -u %DOCKERHUB_USER% -p %DOCKERHUB_CREDENTIALS_PSW%"
+                    bat "docker tag %BACKEND_IMAGE% %DOCKERHUB_USER%/%BACKEND_IMAGE%"
+                    bat "docker tag %FRONTEND_IMAGE% %DOCKERHUB_USER%/%FRONTEND_IMAGE%"
+                    bat "docker push %DOCKERHUB_USER%/%BACKEND_IMAGE%"
+                    bat "docker push %DOCKERHUB_USER%/%FRONTEND_IMAGE%"
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                script {
-                    echo 'Deploying using docker-compose.prod.yml...'
-                    sh 'docker compose -f docker-compose.prod.yml down'
-                    sh 'docker compose -f docker-compose.prod.yml up -d'
-                }
+                echo "Deploying with Docker Compose..."
+                bat "docker compose -f docker-compose.prod.yml down"
+                bat "docker compose -f docker-compose.prod.yml up -d"
             }
         }
     }
 
     post {
         always {
-            echo 'Cleaning up workspace...'
+            echo "Cleaning up workspace..."
             cleanWs()
         }
     }
