@@ -1,21 +1,28 @@
 # aegonish-frontend/Dockerfile
-# Build stage
+
+# ---------- Stage 1: Build ----------
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY aegonish-frontend/package*.json ./
+
+# copy package files
+COPY package*.json ./
 RUN npm ci --silent
-COPY aegonish-frontend/ ./
-# If you use tsc build step as in your package.json build script, keep it
+
+# copy source and build
+COPY . ./
 RUN npm run build
 
-# Production nginx stage
+# ---------- Stage 2: NGINX ----------
 FROM nginx:stable-alpine AS runner
-# remove default html
+
+# remove default nginx page
 RUN rm -rf /usr/share/nginx/html/*
+
+# copy build output from vite
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# copy nginx config
-COPY aegonish-frontend/nginx.conf /etc/nginx/conf.d/default.conf
+# copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
