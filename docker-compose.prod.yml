@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: aegonish-mongo-prod
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: aegonish_blog
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: aegonish-backend:latest
+    container_name: aegonish-backend
+    restart: unless-stopped
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/aegonish_blog
+    env_file:
+      - ./.env
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo
+    volumes:
+      - backend_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:4000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./aegonish-frontend
+      dockerfile: Dockerfile
+    image: aegonish-frontend:latest
+    container_name: aegonish-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1","--spider", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mongo_data:
+  backend_uploads:
