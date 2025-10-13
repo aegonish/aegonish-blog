@@ -59,8 +59,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo "Deploying with Docker Compose..."
-                bat "docker compose -f docker-compose.prod.yml down"
-                bat "docker compose -f docker-compose.prod.yml up -d"
+                withCredentials([string(credentialsId: 'prod-env-file', variable: 'ENV_FILE_CONTENT')]) {
+                    writeFile file: '.env', text: "${ENV_FILE_CONTENT}"
+                    bat "docker compose -f docker-compose.prod.yml down"
+                    bat "docker compose -f docker-compose.prod.yml up -d"
             }
         }
     }
