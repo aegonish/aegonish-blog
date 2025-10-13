@@ -37,7 +37,7 @@ pipeline {
         stage('Build Frontend Image') {
             steps {
                 echo "Building frontend Docker image..."
-                dir('frontend') {
+                dir('aegonish-frontend') {
                     bat "docker build -t %FRONTEND_IMAGE% ."
                 }
             }
