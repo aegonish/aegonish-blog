@@ -7,7 +7,7 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')   // Jenkins credential ID for Docker Hub
         BACKEND_IMAGE = "aegonish-backend"
         FRONTEND_IMAGE = "aegonish-frontend"
-        DOCKERHUB_USER = "your_dockerhub_username"
+        DOCKERHUB_USER = "aegonishblog"
     }
 
     stages {
