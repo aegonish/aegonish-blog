@@ -1,0 +1,16 @@
+apiVersion: v2
+name: aegonish-blog
+description: Umbrella chart for Aegonish (frontend, backend, mongo)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+dependencies:
+  - name: backend
+    repository: file://./charts/backend
+    version: 0.1.0
+  - name: frontend
+    repository: file://./charts/frontend
+    version: 0.1.0
+  - name: mongo
+    repository: file://./charts/mongo
+    version: 0.1.0

@@ -1,0 +1,25 @@
+replicaCount: 1
+
+image:
+  repository: aegonishblog/aegonish-backend
+  tag: latest
+  pullPolicy: Always
+
+service:
+  port: 4000
+  targetPort: 4000
+
+config:
+  NODE_ENV: "production"
+  PORT: "4000"
+
+secret:
+  name: google-oauth
+  keys:
+    - GOOGLE_DRIVE_FOLDER_ID
+    - GOOGLE_CLIENT_ID
+    - GOOGLE_CLIENT_SECRET
+    - GOOGLE_REDIRECT_URI
+    - GOOGLE_REFRESH_TOKEN
+    - MONGO_URI
+    - PORT

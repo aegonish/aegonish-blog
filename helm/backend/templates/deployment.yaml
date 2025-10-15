@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "backend.fullname" . }}
+  namespace: aegonish
+  labels:
+    app: {{ include "backend.name" . }}
+spec:
+  replicas: {{ .Values.backend.replicaCount | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ include "backend.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "backend.name" . }}
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.backend.service.targetPort | default 4000 }}
+          env:
+            - name: NODE_ENV
+              value: {{ quote .Values.backend.config.NODE_ENV }}
+            - name: PORT
+              value: {{ quote .Values.backend.config.PORT }}
+            - name: MONGO_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: aegonish-config
+                  key: MONGO_URI
+{{- if .Values.backend.secret.name }}
+{{- range $key := .Values.backend.secret.keys }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.backend.secret.name }}
+                  key: {{ $key }}
+{{- end }}
+{{- end }}
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: backend-uploads-pvc

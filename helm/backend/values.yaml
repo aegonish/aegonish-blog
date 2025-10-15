@@ -1,0 +1,37 @@
+replicaCount: 1
+
+image:
+  repository: aegonish-backend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nameOverride: backend
+fullnameOverride: backend
+
+service:
+  port: 4000
+  targetPort: 4000
+  type: ClusterIP
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Config / env settings (non-sensitive)
+config:
+  MONGO_URI: "mongodb://mongo:27017/aegonish_blog"
+  NODE_ENV: "production"
+  PORT: "4000"
+
+# Secrets - recommend creating via kubectl or external secret manager and not storing secret values here
+secret:
+  name: google-oauth
+  keys:
+    - GOOGLE_DRIVE_FOLDER_ID
+    - GOOGLE_CLIENT_ID
+    - GOOGLE_CLIENT_SECRET
+    - GOOGLE_REDIRECT_URI
+    - GOOGLE_REFRESH_TOKEN
+    - MONGO_URI
+    - PORT

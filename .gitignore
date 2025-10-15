@@ -13,3 +13,5 @@ build/
 # misc
 uploads/
 .DS_Store
+
+k8s/secrets.local.yaml

@@ -1,0 +1,17 @@
+replicaCount: 1
+
+image:
+  repository: aegonishblog/aegonish-frontend
+  tag: latest
+  pullPolicy: Always
+
+service:
+  port: 80
+  targetPort: 80
+
+ingress:
+  enabled: true
+  host: aegonish.local
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
