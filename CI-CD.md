@@ -10,7 +10,6 @@ The pipeline automates:
 - Deploying via Docker Compose (production stack)
 
 ---
-
 ## 🧱 Infrastructure Setup
 
 ### Jenkins Master
