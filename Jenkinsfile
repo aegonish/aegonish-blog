@@ -67,10 +67,10 @@ stage('Push to AWS ECR') {
         withAWS(credentials: 'aws-creds', region: 'ap-south-1') {
             bat """
                 aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 059549668539.dkr.ecr.ap-south-1.amazonaws.com
-                docker tag aegonish-backend 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-repo:backend-latest
-                docker tag aegonish-frontend 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-repo:frontend-latest
-                docker push 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-repo:backend-latest
-                docker push 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-repo:frontend-latest
+                docker tag aegonish-backend 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo:backend-latest
+                docker tag aegonish-frontend 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo:frontend-latest
+                docker push 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo:backend-latest
+                docker push 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo:frontend-latest
             """
         }
     }
