@@ -14,9 +14,11 @@ spec:
       labels:
         app: mongo
     spec:
+      imagePullSecrets:
+        - name: ecr-creds
       containers:
         - name: mongo
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"      
           ports:
             - containerPort: {{ .Values.service.port }}
           volumeMounts:

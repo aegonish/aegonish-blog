@@ -13,9 +13,11 @@ spec:
       labels:
         app: {{ include "frontend.name" . }}
     spec:
+      imagePullSecrets:
+        - name: ecr-creds
       containers:
         - name: frontend
           image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
-          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}        
           ports:
             - containerPort: {{ .Values.service.targetPort }}

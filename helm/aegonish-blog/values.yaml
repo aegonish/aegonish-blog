@@ -1,8 +1,8 @@
 # Umbrella-level values (defaults can be overridden by CI)
 backend:
   image:
-    repository: aegonishblog/aegonish-backend
-    tag: latest
+    repository: 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo
+    tag: backend-latest
     pullPolicy: Always
   replicaCount: 1
   service:
@@ -11,8 +11,8 @@ backend:
 
 frontend:
   image:
-    repository: aegonishblog/aegonish-frontend
-    tag: latest
+    repository: 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo
+    tag: frontend-latest
     pullPolicy: Always
   replicaCount: 1
   service:
@@ -47,4 +47,5 @@ secrets:
   PORT: "4000"
 
 # Optional registry pull secret name (use if images are private)
-imagePullSecrets: []
+imagePullSecrets:
+  - name: ecr-creds
