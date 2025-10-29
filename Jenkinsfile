@@ -1,7 +1,7 @@
 //@Library('jenkins-shared-libs') _
 
 pipeline {
-    agent { label 'local-agent' }
+//    agent { label 'local-agent' }
 
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
