@@ -2,7 +2,7 @@
 
 pipeline {
 //    agent { label 'local-agent' }
-
+    agent any
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         GITHUB_CREDENTIALS = credentials('github-pat')
