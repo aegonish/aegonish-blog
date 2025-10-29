@@ -1,4 +1,4 @@
-@Library('jenkins-shared-libs') _
+//@Library('jenkins-shared-libs') _
 
 pipeline {
     agent { label 'local-agent' }

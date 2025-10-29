@@ -1,0 +1,5 @@
+﻿{
+  "spec": {
+    "storageClassName": "ebs-sc"
+  }
+}
