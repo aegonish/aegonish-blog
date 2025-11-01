@@ -39,7 +39,7 @@ pipeline {
         stage('Build Frontend Image') {
             steps {
                 echo 'Building frontend Docker image...'
-                dir('frontend') {
+                dir('aegonish-frontend') {
                     sh 'docker build -t aegonish-frontend .'
                 }
             }
