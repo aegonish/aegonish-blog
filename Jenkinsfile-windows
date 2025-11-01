@@ -1,18 +1,17 @@
 //@Library('jenkins-shared-libs') _
 
 pipeline {
-    agent { label 'slave-node' }
-
+    agent { label 'local-agent' }
+//    agent any
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         GITHUB_CREDENTIALS = credentials('github-pat')
         AWS_REGION = 'ap-south-1'
         AWS_ACCOUNT_ID = '059549668539'
-        ECR_REPO = 'aegonish-eks-cluster-repo'
+        ECR_REPO = 'aegonish-eks-repo'
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 echo 'Cloning repository...'
@@ -31,7 +30,7 @@ pipeline {
             steps {
                 echo 'Building backend Docker image...'
                 dir('backend') {
-                    sh 'docker build -t aegonish-backend .'
+                    bat 'docker build -t aegonish-backend .'
                 }
             }
         }
@@ -39,19 +38,18 @@ pipeline {
         stage('Build Frontend Image') {
             steps {
                 echo 'Building frontend Docker image...'
-                dir('frontend') {
-                    sh 'docker build -t aegonish-frontend .'
+                dir('aegonish-frontend') {
+                    bat 'docker build -t aegonish-frontend .'
                 }
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                echo 'Pushing Docker images to Docker Hub...'
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                script {
+                    echo 'Pushing Docker images to Docker Hub...'
+                    bat """
+                        docker login -u ${DOCKERHUB_CREDENTIALS_USR} -p ${DOCKERHUB_CREDENTIALS_PSW}
                         docker tag aegonish-backend aegonishblog/aegonish-backend:latest
                         docker tag aegonish-frontend aegonishblog/aegonish-frontend:latest
                         docker push aegonishblog/aegonish-backend:latest
@@ -61,32 +59,31 @@ pipeline {
             }
         }
 
-        stage('Push to AWS ECR') {
-            steps {
-                withAWS(credentials: 'aws-creds', region: 'ap-south-1') {
-                    sh """
-                        aws ecr get-login-password --region ap-south-1 \
-                            | docker login \
-                                --username AWS \
-                                --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com
-                        
-                        docker tag aegonish-backend ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/${ECR_REPO}:backend-latest
-                        docker tag aegonish-frontend ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/${ECR_REPO}:frontend-latest
-
-                        docker push ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/${ECR_REPO}:backend-latest
-                        docker push ${AWS_ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com/${ECR_REPO}:frontend-latest
-                    """
-                }
-            }
+stage('Push to AWS ECR') {
+    environment {
+        AWS_DEFAULT_REGION = 'ap-south-1'
+    }
+    steps {
+        withAWS(credentials: 'aws-creds', region: 'ap-south-1') {
+            bat """
+                aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 059549668539.dkr.ecr.ap-south-1.amazonaws.com
+                docker tag aegonish-backend 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo:backend-latest
+                docker tag aegonish-frontend 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo:frontend-latest
+                docker push 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo:backend-latest
+                docker push 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo:frontend-latest
+            """
         }
+    }
+}
+
 
         stage('Deploy') {
             steps {
                 echo 'Deploying with Docker Compose...'
                 withCredentials([file(credentialsId: 'aegonish-env', variable: 'ENV_FILE')]) {
-                    sh """
-                        cp "$ENV_FILE" .env
-                        docker compose -f docker-compose.prod.yml down || true
+                    bat """
+                        copy "%ENV_FILE%" .env
+                        docker compose -f docker-compose.prod.yml down
                         docker compose -f docker-compose.prod.yml up -d --build
                     """
                 }
