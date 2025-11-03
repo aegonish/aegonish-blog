@@ -80,18 +80,6 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
-            steps {
-                echo 'Deploying with Docker Compose...'
-                withCredentials([file(credentialsId: 'aegonish-env', variable: 'ENV_FILE')]) {
-                    sh """
-                        cp "$ENV_FILE" .env
-                        docker compose -f docker-compose.prod.yml down || true
-                        docker compose -f docker-compose.prod.yml up -d --build
-                    """
-                }
-            }
-        }
     }
 
     post {
