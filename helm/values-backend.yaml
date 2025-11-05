@@ -4,7 +4,7 @@ persistence:
   size: 1Gi
 
 image:
-  repository: 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo/backend
+  repository: 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo/backend-latest
   tag: latest
 
 service:
