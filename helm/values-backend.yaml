@@ -1,0 +1,11 @@
+persistence:
+  enabled: true
+  storageClass: "gp2"
+  size: 1Gi
+
+image:
+  repository: 059549668539.dkr.ecr.ap-south-1.amazonaws.com/aegonish-eks-cluster-repo/backend
+  tag: latest
+
+service:
+  type: ClusterIP
