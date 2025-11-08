@@ -15,6 +15,13 @@ spec:
       labels:
         app: {{ include "backend.name" . }}
     spec:
+      # ✅ Ensures Kubernetes gives proper group ownership to mounted volumes
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+
       # ✅ Optional safety net: ensure uploads dir is writable before container starts
       initContainers:
         - name: fix-permissions
@@ -24,28 +31,26 @@ spec:
             - name: uploads
               mountPath: /app/uploads
 
-      # ✅ Ensures Kubernetes gives proper group ownership to mounted volumes
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
-        fsGroupChangePolicy: "OnRootMismatch"
-
       imagePullSecrets:
 {{- if .Values.imagePullSecrets }}
 {{- range .Values.imagePullSecrets }}
         - name: {{ . }}
 {{- end }}
 {{- end }}
+
       containers:
         - name: backend
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.targetPort }}
+
+          # ✅ Inject all environment variables from the google-oauth secret
           envFrom:
             - secretRef:
                 name: google-oauth
+
+          # ✅ Additional specific environment variables not in secret/configmap
           env:
             - name: NODE_ENV
               value: {{ quote .Values.config.NODE_ENV }}
@@ -56,18 +61,11 @@ spec:
                 configMapKeyRef:
                   name: aegonish-config
                   key: MONGO_URI
-{{- if .Values.secret.name }}
-{{- range $key := .Values.secret.keys }}
-            - name: {{ $key }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $.Values.secret.name }}
-                  key: {{ $key }}
-{{- end }}
-{{- end }}
+
           volumeMounts:
             - name: uploads
               mountPath: /app/uploads
+
       volumes:
         - name: uploads
           persistentVolumeClaim:
