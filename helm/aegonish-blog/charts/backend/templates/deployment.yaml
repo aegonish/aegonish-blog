@@ -15,6 +15,22 @@ spec:
       labels:
         app: {{ include "backend.name" . }}
     spec:
+      # ✅ Optional safety net: ensure uploads dir is writable before container starts
+      initContainers:
+        - name: fix-permissions
+          image: busybox
+          command: ["sh", "-c", "chmod -R 777 /app/uploads || true"]
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+
+      # ✅ Ensures Kubernetes gives proper group ownership to mounted volumes
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+
       imagePullSecrets:
 {{- if .Values.imagePullSecrets }}
 {{- range .Values.imagePullSecrets }}
