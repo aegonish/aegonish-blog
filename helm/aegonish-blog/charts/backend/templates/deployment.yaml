@@ -27,6 +27,9 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.targetPort }}
+          envFrom:
+            - secretRef:
+                name: google-oauth
           env:
             - name: NODE_ENV
               value: {{ quote .Values.config.NODE_ENV }}
