@@ -77,18 +77,18 @@ stage('Push to AWS ECR') {
 }
 
 
-        stage('Deploy') {
-            steps {
-                echo 'Deploying with Docker Compose...'
-                withCredentials([file(credentialsId: 'aegonish-env', variable: 'ENV_FILE')]) {
-                    bat """
-                        copy "%ENV_FILE%" .env
-                        docker compose -f docker-compose.prod.yml down
-                        docker compose -f docker-compose.prod.yml up -d --build
-                    """
-                }
-            }
-        }
+     //   stage('Deploy') {
+     //       steps {
+     //           echo 'Deploying with Docker Compose...'
+     //           withCredentials([file(credentialsId: 'aegonish-env', variable: 'ENV_FILE')]) {
+     //               bat """
+     //                   copy "%ENV_FILE%" .env
+     //                   docker compose -f docker-compose.prod.yml down
+     //                   docker compose -f docker-compose.prod.yml up -d --build
+     //               """
+     //           }
+     //       }
+     //   }
     }
 
     post {
